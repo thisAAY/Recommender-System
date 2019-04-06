@@ -13,7 +13,7 @@ items = [ "suit" , "dress" , "shoes" , "T−shirt" , "Jacket" , "skirt" , "short
 purchases = [ ( "A" , [[ "dress" , "shoes" ] , [ "milk" , "cheese" , "eggs"]]) ,
               ("B" , [[ "earphone" , "mouse" , "laptop" ] , [ "mp3 player" ] ] ) ,
               ("C" , [ [ "bread" , "milk" ] , [ "shoes" ] ] ) ,
-              ("D" , [ [ "milk" , "meat" , "chicken" , " yogurt" ] , [ "beans" , "cereal" , "flour" , "sugar"] , [ "tomatoes" , "oil" , "chicken" ] ] ) ,
+              ("D" , [ [ "milk" , "meat" , "chicken" , "yogurt" ] , [ "beans" , "cereal" , "flour" , "sugar"] , [ "tomatoes" , "oil" , "chicken" ] ] ) ,
               ("E" , [] )]
 
 
@@ -38,16 +38,23 @@ getItemCart item carts = if (elem item (head carts))
 getUserStats user = [(item,[(a,countOcc a (getItemCart item (getList user purchases)) ) 
                     | a <- getItemCart item (getList user purchases)]) | item <- items]
 
-getAllUsersStats = [(user,getUserStats user) | user <- users]
+getAllUsersStats us = [(user,getUserStats user) | user <- us]
+
+removeUser user ps = removeItem (user,getList user ps) ps
+getItemsWihtoutUser user ps = [ snd a | a <- (removeUser user ps) ]
 
 
+getCartStats cart = [(item,[(a,countOcc a (removeItem item cart)) | a <- (removeItem item cart)]) | item<- cart]
+getCartsStats carts = [getCartStats cart | cart <- carts , not (null (snd (head (getCartStats cart))))]
+purchasesIntersection user ps = concat [getCartsStats carts | carts <- getItemsWihtoutUser user ps]
 
+getMaxFreq xs =maximum [snd a  | a <- xs]
 
+getPossipleItems user ps = concat [snd a | a <- concat ( purchasesIntersection user ps)]
 
-
-
-
-
+recommendBasedOnUsers' user ps =  [fst item | item <- getPossipleItems user ps
+                                  , snd item == getMaxFreq (getPossipleItems user ps)] 
+recommendBasedOnUsers user ps  = recommendBasedOnUsers' user ps !!  randomZeroToX ( length (recommendBasedOnUsers' user ps))
 
 
 
