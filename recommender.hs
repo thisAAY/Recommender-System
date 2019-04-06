@@ -54,7 +54,7 @@ getPossipleItems user ps = concat [snd a | a <- concat ( purchasesIntersection u
 
 recommendBasedOnUsers' user ps =  [fst item | item <- getPossipleItems user ps
                                   , snd item == getMaxFreq (getPossipleItems user ps)] 
-recommendBasedOnUsers user ps  = recommendBasedOnUsers' user ps !!  randomZeroToX ( length (recommendBasedOnUsers' user ps))
+recommendBasedOnUsers user   = recommendBasedOnUsers' user purchases !!  randomZeroToX ( length (recommendBasedOnUsers' user purchases))
 
 
 
