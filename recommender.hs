@@ -58,3 +58,6 @@ recommendBasedOnUsers user   = recommendBasedOnUsers' user purchases !!  randomZ
 
 
 
+recommendEmptyCart user =if null (getList user purchases) then recommendBasedOnUsers user
+                         else if ((randomZeroToX 1) == 0) then recommendBasedOnUsers user
+                         else (concat (getList user purchases)) !!  randomZeroToX (length (concat(getList user purchases)))
