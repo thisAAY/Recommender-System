@@ -46,11 +46,11 @@ getItemsWihtoutUser user ps = [ snd a | a <- (removeUser user ps) ]
 
 getCartStats cart = [(item,[(a,countOcc a (removeItem item cart)) | a <- (removeItem item cart)]) | item<- cart]
 getCartsStats carts = [getCartStats cart | cart <- carts , not (null (snd (head (getCartStats cart))))]
-purchasesIntersection user ps = concat [getCartsStats carts | carts <- getItemsWihtoutUser user ps]
+purchasesIntersection user = concat [getCartsStats carts | carts <- getItemsWihtoutUser user purchases]
 
 getMaxFreq xs =maximum [snd a  | a <- xs]
 
-getPossipleItems user ps = concat [snd a | a <- concat ( purchasesIntersection user ps)]
+getPossipleItems user ps = concat [snd a | a <- concat ( purchasesIntersection user )]
 
 recommendBasedOnUsers' user ps =  [fst item | item <- getPossipleItems user ps
                                   , snd item == getMaxFreq (getPossipleItems user ps)] 
@@ -61,3 +61,9 @@ recommendBasedOnUsers user   = recommendBasedOnUsers' user purchases !!  randomZ
 recommendEmptyCart user =if null (getList user purchases) then recommendBasedOnUsers user
                          else if ((randomZeroToX 1) == 0) then recommendBasedOnUsers user
                          else (concat (getList user purchases)) !!  randomZeroToX (length (concat(getList user purchases)))
+
+getAllIntersectionWithItem user item =concat [snd a | a <- concat (purchasesIntersection user),fst a == item]
+getPossipleIntersectionWithItem user item  = [fst a | a <- getAllIntersectionWithItem user item,snd a ==getMaxFreq (getAllIntersectionWithItem user item) ]
+getPossipleIntersectionWithCart user cart = concat [getPossipleIntersectionWithItem user item | item <- cart]
+
+recommend user cart = getPossipleIntersectionWithCart user cart !! randomZeroToX (length (getPossipleIntersectionWithCart user cart) - 1)
