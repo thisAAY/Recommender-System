@@ -68,7 +68,13 @@ recommendEmptyCart user =if null (getList user purchases) then recommendBasedOnU
                          else (concat (getList user purchases)) !!  randomZeroToX (length (concat(getList user purchases)))
 
 getAllIntersectionWithItem user item =concat [snd a | a <- concat (purchasesIntersection user),fst a == item]
-getPossipleIntersectionWithItem user item  = [fst a | a <- getAllIntersectionWithItem user item,snd a ==getMaxFreq (getAllIntersectionWithItem user item) ]
+getPossipleIntersectionWithItem user item  = repeateItems  (getAllIntersectionWithItem user item)
 getPossipleIntersectionWithCart user cart = concat [getPossipleIntersectionWithItem user item | item <- cart]
 
-recommend user cart = getPossipleIntersectionWithCart user cart !! randomZeroToX (length (getPossipleIntersectionWithCart user cart) - 1)
+recommend user cart = list !! randomZeroToX (length list - 1)
+                      where list = getPossipleIntersectionWithCart user cart
+
+
+
+
+
