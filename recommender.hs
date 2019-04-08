@@ -57,7 +57,7 @@ repeateItems (x:xs) =  replicate w item ++ repeateItems xs
                         where w = snd x
                               item = fst x
 recommendBasedOnUsers' user ps = repeateItems( getPossipleItems user ps)
-recommendBasedOnUsers user   =  list !!  randomZeroToX ( length list)
+recommendBasedOnUsers user   =  list !!  randomZeroToX ( length list - 1)
                                 where list = recommendBasedOnUsers' user purchases
 
 
