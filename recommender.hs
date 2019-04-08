@@ -52,11 +52,15 @@ getMaxFreq xs =maximum [snd a  | a <- xs]
 
 getPossipleItems user ps = concat [snd a | a <- concat ( purchasesIntersection user )]
 
-recommendBasedOnUsers' user ps =  [fst item | item <- ps
-                                  , snd item == getMaxFreq ps] 
-                                  where ps = getPossipleItems user ps
+repeateItems [(item,w)] =  replicate w item
+repeateItems (x:xs) =  replicate w item ++ repeateItems xs
+                        where w = snd x
+                              item = fst x
+recommendBasedOnUsers' user ps =  [fst item | item <- ps] 
+                                  where ps = repeateItems( getPossipleItems user ps)
 recommendBasedOnUsers user   =  list !!  randomZeroToX ( length list)
                                 where list = recommendBasedOnUsers' user purchases
+
 
 
 
