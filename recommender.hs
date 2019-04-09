@@ -73,8 +73,3 @@ getPossipleIntersectionWithCart user cart = concat [getPossipleIntersectionWithI
 
 recommend user cart = list !! randomZeroToX (length list - 1)
                       where list = getPossipleIntersectionWithCart user cart
-
-
-
-
-
