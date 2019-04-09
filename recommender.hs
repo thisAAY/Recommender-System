@@ -6,17 +6,14 @@ randomZeroToX :: Int -> Int
 randomZeroToX x= unsafePerformIO (getStdRandom (randomR (0, x)))
 --Names
 
-users = [ "A" , "B" , "C" , "D" , "E" ]
-items = [ "suit" , "dress" , "shoes" , "T−shirt" , "Jacket" , "skirt" , "shorts" ,
- "shirt" , "trousers" , "scarf" , "mp3 player" , "TV" , "LCD screen" , "headphone" , "laptop" , "keyboard" , "mouse" , "cellphone" , "headphone" , "earphone" , "milk" ,"cheese" , "bread" , "chocolate" , "meat" ,"flour" , "sugar" ,"oil" ,"tomatoes" , "chicken" ,"yogurt" , "cereal" , "beans" , "fool","eggs" ]
-
-purchases = [ ( "A" , [[ "dress" , "shoes" ] , [ "milk" , "cheese" , "eggs"]]) ,
-              ("B" , [[ "earphone" , "mouse" , "laptop" ] , [ "mp3 player" ] ] ) ,
-              ("C" , [ [ "bread" , "milk" ] , [ "shoes" ] ] ) ,
-              ("D" , [ [ "milk" , "meat" , "chicken" , "yogurt" ] , [ "beans" , "cereal" , "flour" , "sugar"] , [ "tomatoes" , "oil" , "chicken" ] ] ) ,
-              ("E" , [] )]
-
-
+users = ["user1", "user2", "user3", "user4"] 
+items = ["item1", "item2", "item3", "item4", "item5", "item6"] 
+purchases = [ ("user1", [["item1", "item2", "item3"] , ["item1", "item2", "item4"]]) , 
+              ("user2", [["item2", "item5"] , ["item4", "item5"]]) , 
+              ("user3", [["item3", "item2"]]) , 
+              ("user4", [])]
+-- use for easy debuging
+ppp = purchases
 
 
 getList user ps = if fst (head ps) == user then snd (head ps) else getList user (tail ps)
@@ -28,17 +25,22 @@ flattenPurcahes user  = concat (getList user purchases)
 removeItem _ []                 = []
 removeItem x (y:ys) | x == y    = removeItem x ys
                     | otherwise = y : removeItem x ys
+getItemCart item [] = []
+getItemCart item (cart:carts) = if elem item cart then removeItem item cart ++  (getItemCart item carts)
+                                else getItemCart item carts
+removeDubs [] = []
+removeDubs (x:xs) = if elem x xs then x : removeDubs (removeItem x xs) else x : removeDubs xs
+getUserItems item carts =removeDubs (getItemCart item carts)
+--getUserItems user ps = removeDubs (getUserItemsWithDubs user ps)
+-- getUserStats user ps = [(item,[(a,countOcc a (getItemCart item (getList user ps)) ) 
+--                     | a <- getItemCart item (getList user ps)]) | item <- items]
 
-getItemCart _ [] = []
-getItemCart item carts = if (elem item (head carts))
-                                 then (removeItem item (head carts)) 
-                                 else if (length carts == 1) then [] 
-                                 else  getItemCart item (tail carts)
+getItemStats item user ps= [(item2,countOcc item2 (getItemCart item (getList user ps)))| item2 <-  removeItem item (getUserItems item (getList user ps))]
 
-getUserStats user = [(item,[(a,countOcc a (getItemCart item (getList user purchases)) ) 
-                    | a <- getItemCart item (getList user purchases)]) | item <- items]
+getUserStats user ps = [(item,getItemStats item user ps) | item <- items]
 
-getAllUsersStats us = [(user,getUserStats user) | user <- us]
+
+getAllUsersStats ps = [(fst p,getUserStats (fst p) ps) | p <- ps]
 
 removeUser user ps = removeItem (user,getList user ps) ps
 getItemsWihtoutUser user ps = [ snd a | a <- (removeUser user ps) ]
@@ -46,30 +48,32 @@ getItemsWihtoutUser user ps = [ snd a | a <- (removeUser user ps) ]
 
 getCartStats cart = [(item,[(a,countOcc a (removeItem item cart)) | a <- (removeItem item cart)]) | item<- cart]
 getCartsStats carts = [getCartStats cart | cart <- carts , not (null (snd (head (getCartStats cart))))]
-purchasesIntersection user = concat [getCartsStats carts | carts <- getItemsWihtoutUser user purchases]
+purchasesIntersection user ps = [item | item <- getAllUsersStats ps,not ((snd item) == getUserStats user ps) ]
 
-getMaxFreq xs =maximum [snd a  | a <- xs]
+-- getMaxFreq xs =maximum [snd a  | a <- xs]
 
-getPossipleItems user ps = concat [snd a | a <- concat ( purchasesIntersection user )]
+-- -- getPossipleItems user ps = concat [snd a | a <- concat ( purchasesIntersection user )]
 
-repeateItems [(item,w)] =  replicate w item
-repeateItems (x:xs) =  replicate w item ++ repeateItems xs
-                        where w = snd x
-                              item = fst x
-recommendBasedOnUsers' user ps = repeateItems( getPossipleItems user ps)
-recommendBasedOnUsers user   =  list !!  randomZeroToX ( length list - 1)
-                                where list = recommendBasedOnUsers' user purchases
-
-
+-- repeateItems [(item,w)] =  replicate w item
+-- repeateItems (x:xs) =  replicate w item ++ repeateItems xs
+--                         where w = snd x
+--                               item = fst x
+-- recommendBasedOnUsers' user ps = repeateItems( getPossipleItems user ps)
+-- recommendBasedOnUsers user   =  list !!  randomZeroToX ( length list - 1)
+--                                 where list = recommendBasedOnUsers' user purchases
 
 
-recommendEmptyCart user =if null (getList user purchases) then recommendBasedOnUsers user
-                         else if ((randomZeroToX 1) == 0) then recommendBasedOnUsers user
-                         else (concat (getList user purchases)) !!  randomZeroToX (length (concat(getList user purchases)))
 
-getAllIntersectionWithItem user item =concat [snd a | a <- concat (purchasesIntersection user),fst a == item]
-getPossipleIntersectionWithItem user item  = repeateItems  (getAllIntersectionWithItem user item)
-getPossipleIntersectionWithCart user cart = concat [getPossipleIntersectionWithItem user item | item <- cart]
 
-recommend user cart = list !! randomZeroToX (length list - 1)
-                      where list = getPossipleIntersectionWithCart user cart
+-- recommendEmptyCart user =if null (getList user purchases) then recommendBasedOnUsers user
+--                          else if ((randomZeroToX 1) == 0) then recommendBasedOnUsers user
+--                          else (concat (getList user purchases)) !!  randomZeroToX (length (concat(getList user purchases)))
+
+-- getAllIntersectionWithItem user item =concat [snd a | a <- concat (purchasesIntersection user),fst a == item]
+-- getPossipleIntersectionWithItem user item  = repeateItems  (getAllIntersectionWithItem user item)
+-- getPossipleIntersectionWithCart user cart = concat [getPossipleIntersectionWithItem user item | item <- cart]
+
+-- recommend user cart = list !! randomZeroToX (length list - 1)
+--                       where list = getPossipleIntersectionWithCart user cart
+
+                      
