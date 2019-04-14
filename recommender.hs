@@ -48,16 +48,12 @@ getItemsWihtoutUser user ps = [ snd a | a <- (removeUser user ps) ]
 
 getCartStats cart = [(item,[(a,countOcc a (removeItem item cart)) | a <- (removeItem item cart)]) | item<- cart]
 getCartsStats carts = [getCartStats cart | cart <- carts , not (null (snd (head (getCartStats cart))))]
-purchasesIntersection user ps = [item | item <- getAllUsersStats ps,not ((snd item) == getUserStats user ps) ]
+purchasesIntersection user ps = [getUserStats u ps | u <- users,u /= user ]
 
 -- getMaxFreq xs =maximum [snd a  | a <- xs]
 
--- -- getPossipleItems user ps = concat [snd a | a <- concat ( purchasesIntersection user )]
+-- getPossipleItems user ps =concat [ snd b| b <- concat [ snd a | a <-  purchasesIntersection user ps ]]
 
--- repeateItems [(item,w)] =  replicate w item
--- repeateItems (x:xs) =  replicate w item ++ repeateItems xs
---                         where w = snd x
---                               item = fst x
 -- recommendBasedOnUsers' user ps = repeateItems( getPossipleItems user ps)
 -- recommendBasedOnUsers user   =  list !!  randomZeroToX ( length list - 1)
 --                                 where list = recommendBasedOnUsers' user purchases
@@ -73,7 +69,19 @@ purchasesIntersection user ps = [item | item <- getAllUsersStats ps,not ((snd it
 -- getPossipleIntersectionWithItem user item  = repeateItems  (getAllIntersectionWithItem user item)
 -- getPossipleIntersectionWithCart user cart = concat [getPossipleIntersectionWithItem user item | item <- cart]
 
--- recommend user cart = list !! randomZeroToX (length list - 1)
---                       where list = getPossipleIntersectionWithCart user cart
+repeateItems [(item,w)] =  replicate w item
+repeateItems (x:xs) =  replicate w item ++ repeateItems xs
+                        where w = snd x
+                              item = fst x
 
+recommend user [] = list !! randomZeroToX (length list - 1)
+                      where list = repeateItems (freqListItems user)
                       
+getPossipleItems  stats = concat[ snd a | a <- stats]
+
+getFreqForItem item stats = sum [snd a | a <- getPossipleItems  stats, fst a == item]
+
+
+freqListItems user =[a | a <- allItems , snd a > 0]
+                     where allItems =  [(fst item,getFreqForItem (fst item) stats) | item <- stats]
+                           stats = getUserStats user purchases
