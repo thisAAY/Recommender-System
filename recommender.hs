@@ -1,9 +1,9 @@
 --import
 import System.Random
 import System.IO.Unsafe
-
+import Data.List
 randomZeroToX :: Int -> Int
-randomZeroToX x= unsafePerformIO (getStdRandom (randomR (0, x)))
+randomZeroToX x = unsafePerformIO (getStdRandom (randomR (0, x)))
 --Names
 
 users = ["user1", "user2", "user3", "user4"] 
@@ -37,10 +37,10 @@ getUserItems item carts =removeDubs (getItemCart item carts)
 
 getItemStats item user ps= [(item2,countOcc item2 (getItemCart item (getList user ps)))| item2 <-  removeItem item (getUserItems item (getList user ps))]
 
-getUserStats user ps = [(item,getItemStats item user ps) | item <- items]
+getUserStats user ps cart = [(item,getItemStats item user ps) | item <- cart]
 
 
-getAllUsersStats ps = [(fst p,getUserStats (fst p) ps) | p <- ps]
+getAllUsersStats ps = [(fst p,getUserStats (fst p) ps items) | p <- ps]
 
 removeUser user ps = removeItem (user,getList user ps) ps
 getItemsWihtoutUser user ps = [ snd a | a <- (removeUser user ps) ]
@@ -48,7 +48,7 @@ getItemsWihtoutUser user ps = [ snd a | a <- (removeUser user ps) ]
 
 getCartStats cart = [(item,[(a,countOcc a (removeItem item cart)) | a <- (removeItem item cart)]) | item<- cart]
 getCartsStats carts = [getCartStats cart | cart <- carts , not (null (snd (head (getCartStats cart))))]
-purchasesIntersection user ps = [getUserStats u ps | u <- users,u /= user ]
+-- purchasesIntersection user ps = [getUserStats u ps | u <- users,u /= user ]
 
 -- getMaxFreq xs =maximum [snd a  | a <- xs]
 
@@ -61,27 +61,58 @@ purchasesIntersection user ps = [getUserStats u ps | u <- users,u /= user ]
 
 
 
--- recommendEmptyCart user =if null (getList user purchases) then recommendBasedOnUsers user
---                          else if ((randomZeroToX 1) == 0) then recommendBasedOnUsers user
---                          else (concat (getList user purchases)) !!  randomZeroToX (length (concat(getList user purchases)))
 
 -- getAllIntersectionWithItem user item =concat [snd a | a <- concat (purchasesIntersection user),fst a == item]
 -- getPossipleIntersectionWithItem user item  = repeateItems  (getAllIntersectionWithItem user item)
 -- getPossipleIntersectionWithCart user cart = concat [getPossipleIntersectionWithItem user item | item <- cart]
 
 repeateItems [(item,w)] =  replicate w item
+repeateItems [] = [""]
 repeateItems (x:xs) =  replicate w item ++ repeateItems xs
-                        where w = snd x
-                              item = fst x
+                       where w = snd x
+                             item = fst x
 
-recommend user [] = list !! randomZeroToX (length list - 1)
-                      where list = repeateItems (freqListItems user)
-                      
+
+
 getPossipleItems  stats = concat[ snd a | a <- stats]
 
-getFreqForItem item stats = sum [snd a | a <- getPossipleItems  stats, fst a == item]
+getFreqForItem item stats =(item,sum [snd a | a <- getPossipleItems  stats, fst a == item])
+
 
 
 freqListItems user =[a | a <- allItems , snd a > 0]
-                     where allItems =  [(fst item,getFreqForItem (fst item) stats) | item <- stats]
-                           stats = getUserStats user purchases
+                     where allItems =  [ getFreqForItem item stats | item <- items]
+                           stats = getUserStats user purchases items
+
+freqListCart user cart =[a | a <- allItems , snd a > 0]
+                        where allItems =  [ getFreqForItem item stats | item <- items]
+                              stats = getUserStats user purchases cart
+
+
+
+searchForItem item cart = (fst item,snd item + sum [snd a | a <-cart ,fst a == fst item])
+
+freqListCartAndItems user cart = [searchForItem  item listCart | item <- listItem]
+                                where listItem = freqListItems user
+                                      listCart = freqListCart user cart
+
+
+intersection:: (Eq a) => [[a]] -> [a]
+intersection = foldr1 intersect
+getCommonItems list1 list2 =intersection ( [fst item | item <- list1 ,(snd item) /= []] : [[fst item | item <- list2, (snd item) /= []]])
+makeList  list1 list2 commons = [(fst item1,snd item1) | item1 <- list1,fst item1 `elem` commons]
+-- getIntersections list1 list2 commons = concat [ [(fst a,) | b <- y]  | a<- x]
+--                                       where x = makeList list1 list2 commons
+--                                             y = makeList list2 list2 commons
+purchasesIntersection list1 lists = [getIntersections list1 (snd list2) (getCommonItems  list1 (snd list2)) | list2 <- lists ,(snd list2) /= list1]
+
+
+recommend user [] = recommendEmptyCart user
+recommend user cart = recommendBasedOnItemsInCart user cart
+
+recommendEmptyCart user = list !! randomZeroToX ((length list) - 1)
+                          where list = repeateItems (freqListItems user)
+
+
+recommendBasedOnItemsInCart user cart = list !! randomZeroToX ((length list) - 1)
+                                        where list = repeateItems (freqListCartAndItems user cart)
