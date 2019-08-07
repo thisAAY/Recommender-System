@@ -118,7 +118,3 @@ recommendBasedOnItemsInCart user cart = getRandomItem (freqListCartAndItems user
 
 
 recommendBasedOnUsers  user = getRandomItem (freqListUsers  user)
-
-
-
-
